@@ -67,3 +67,7 @@ node scripts/smoke.mjs  # end-to-end browser test (needs `npx vite preview` runn
 ```
 
 Stack: Vite + React + TypeScript, Dexie (IndexedDB), marked + KaTeX, `@anthropic-ai/sdk` (browser mode), vite-plugin-pwa.
+
+For contributors and AI coding sessions: start with [`CLAUDE.md`](CLAUDE.md), then
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Project agents/skills live in `.claude/`.
