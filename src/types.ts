@@ -89,6 +89,29 @@ export interface QuizAttempt {
   finishedAt: number
 }
 
+export interface PracticeItem {
+  id: string
+  /** Question text, markdown. */
+  question: string
+  /** Worked solution / model answer, markdown. */
+  solution: string
+  /** Suggested marks for the question (exam-style weighting). */
+  marks?: number
+}
+
+export type PracticeStyle = 'homework' | 'exam' | 'mix'
+
+export interface PracticeSet {
+  id: string
+  subjectId: string
+  /** Set when generated from a note. */
+  noteId?: string
+  title: string
+  style: PracticeStyle
+  items: PracticeItem[]
+  createdAt: number
+}
+
 export interface ReviewLog {
   id?: number
   cardId: string

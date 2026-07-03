@@ -6,6 +6,8 @@ import { NoteView } from './views/NoteView'
 import { DeckView } from './views/DeckView'
 import { StudySession } from './views/StudySession'
 import { QuizPlayer } from './views/QuizPlayer'
+import { PracticeView } from './views/PracticeView'
+import { SearchView } from './views/SearchView'
 import { Settings } from './views/Settings'
 
 /** Navigate to a hash route, e.g. go('/deck/abc'). */
@@ -33,6 +35,8 @@ type Route =
   | { view: 'deck'; id: string }
   | { view: 'study'; id: string; mode: 'study' | 'practice' }
   | { view: 'quiz'; id: string }
+  | { view: 'practice'; id: string }
+  | { view: 'search' }
   | { view: 'settings' }
 
 function parseRoute(hash: string): Route {
@@ -55,6 +59,10 @@ function parseRoute(hash: string): Route {
         : { view: 'dashboard' }
     case 'quiz':
       return parts[1] ? { view: 'quiz', id: parts[1] } : { view: 'dashboard' }
+    case 'practice':
+      return parts[1] ? { view: 'practice', id: parts[1] } : { view: 'dashboard' }
+    case 'search':
+      return { view: 'search' }
     case 'settings':
       return { view: 'settings' }
     default:
@@ -79,6 +87,18 @@ export default function App() {
   const route = useRoute()
   const immersive = route.view === 'study'
 
+  // ⌘K / Ctrl+K opens search
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        go('/search')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <div className="app">
       {!immersive && (
@@ -89,6 +109,13 @@ export default function App() {
           <nav>
             <a href="#/" className={route.view === 'dashboard' ? 'active' : ''}>
               Home
+            </a>
+            <a
+              href="#/search"
+              className={route.view === 'search' ? 'active' : ''}
+              aria-label="Search"
+            >
+              🔍 Search
             </a>
             <a href="#/settings" className={route.view === 'settings' ? 'active' : ''}>
               Settings
@@ -105,6 +132,8 @@ export default function App() {
           <StudySession key={route.id + route.mode} deckId={route.id} mode={route.mode} />
         )}
         {route.view === 'quiz' && <QuizPlayer quizId={route.id} />}
+        {route.view === 'practice' && <PracticeView practiceId={route.id} />}
+        {route.view === 'search' && <SearchView />}
         {route.view === 'settings' && <Settings />}
       </main>
     </div>

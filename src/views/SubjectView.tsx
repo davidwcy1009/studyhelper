@@ -1,10 +1,18 @@
+import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, deleteSubjectCascade } from '../db'
 import { newId } from '../types'
 import { isDue } from '../srs'
+import { hasApiKey } from '../ai'
+import { PhotoNoteModal } from '../components/PhotoNoteModal'
+import { PracticeGenModal } from '../components/PracticeGenModal'
 import { go, SubjectChip } from '../App'
 
+const STYLE_LABEL = { homework: 'homework', exam: 'exam-style', mix: 'mixed' }
+
 export function SubjectView({ subjectId }: { subjectId: string }) {
+  const [showPhotoModal, setShowPhotoModal] = useState(false)
+  const [showPracticeModal, setShowPracticeModal] = useState(false)
   const subject = useLiveQuery(() => db.subjects.get(subjectId), [subjectId])
   const notes = useLiveQuery(
     () => db.notes.where('subjectId').equals(subjectId).reverse().sortBy('updatedAt'),
@@ -17,8 +25,12 @@ export function SubjectView({ subjectId }: { subjectId: string }) {
     [subjectId],
   )
   const attempts = useLiveQuery(() => db.attempts.toArray(), [])
+  const practices = useLiveQuery(
+    () => db.practices.where('subjectId').equals(subjectId).reverse().sortBy('createdAt'),
+    [subjectId],
+  )
 
-  if (!subject || !notes || !decks || !cards || !quizzes || !attempts) {
+  if (!subject || !notes || !decks || !cards || !quizzes || !attempts || !practices) {
     return <div className="page">Loading…</div>
   }
 
@@ -89,9 +101,19 @@ export function SubjectView({ subjectId }: { subjectId: string }) {
       <section>
         <div className="section-head">
           <h2>Notes</h2>
-          <button className="btn btn-primary btn-sm" onClick={newNote}>
-            + New note
-          </button>
+          <div className="head-actions">
+            <button
+              className="btn btn-sm"
+              disabled={!hasApiKey()}
+              title={hasApiKey() ? undefined : 'Add an API key in Settings'}
+              onClick={() => setShowPhotoModal(true)}
+            >
+              📷 Note from photos
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={newNote}>
+              + New note
+            </button>
+          </div>
         </div>
         {notes.length === 0 && <p className="hint">No notes yet — start writing!</p>}
         <div className="note-list">
@@ -137,6 +159,37 @@ export function SubjectView({ subjectId }: { subjectId: string }) {
 
       <section>
         <div className="section-head">
+          <h2>Practice questions</h2>
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={!hasApiKey()}
+            title={hasApiKey() ? undefined : 'Add an API key in Settings'}
+            onClick={() => setShowPracticeModal(true)}
+          >
+            ⚡ Example questions
+          </button>
+        </div>
+        {practices.length === 0 && (
+          <p className="hint">
+            Get homework- and test-style example questions (with worked solutions) on any topic.
+          </p>
+        )}
+        <div className="note-list">
+          {practices.map((p) => (
+            <a key={p.id} className="note-row" href={`#/practice/${p.id}`}>
+              <span className="note-row-title">{p.title}</span>
+              <span className="row-chips">
+                <span className="hint">
+                  {p.items.length} questions · {STYLE_LABEL[p.style]}
+                </span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="section-head">
           <h2>Quizzes</h2>
         </div>
         {quizzes.length === 0 && (
@@ -162,6 +215,13 @@ export function SubjectView({ subjectId }: { subjectId: string }) {
           })}
         </div>
       </section>
+
+      {showPhotoModal && (
+        <PhotoNoteModal subjectId={subjectId} onClose={() => setShowPhotoModal(false)} />
+      )}
+      {showPracticeModal && (
+        <PracticeGenModal subjectId={subjectId} onClose={() => setShowPracticeModal(false)} />
+      )}
     </div>
   )
 }

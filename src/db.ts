@@ -8,6 +8,7 @@ import type {
   Quiz,
   QuizAttempt,
   ReviewLog,
+  PracticeSet,
 } from './types'
 
 export const db = new Dexie('studyhelper') as Dexie & {
@@ -19,6 +20,7 @@ export const db = new Dexie('studyhelper') as Dexie & {
   quizzes: EntityTable<Quiz, 'id'>
   attempts: EntityTable<QuizAttempt, 'id'>
   reviews: EntityTable<ReviewLog, 'id'>
+  practices: EntityTable<PracticeSet, 'id'>
 }
 
 db.version(1).stores({
@@ -32,6 +34,10 @@ db.version(1).stores({
   reviews: '++id, cardId, at',
 })
 
+db.version(2).stores({
+  practices: 'id, subjectId, noteId',
+})
+
 /** Delete image blobs referenced by a chunk of markdown (img:<id> links). */
 export async function deleteImagesIn(markdown: string) {
   const ids = [...markdown.matchAll(/img:([0-9a-fA-F-]{36})/g)].map((m) => m[1])
@@ -43,6 +49,7 @@ export async function deleteNoteCascade(noteId: string) {
   if (!note) return
   await deleteImagesIn(note.content)
   await db.quizzes.where('noteId').equals(noteId).modify({ noteId: undefined })
+  await db.practices.where('noteId').equals(noteId).modify({ noteId: undefined })
   await db.notes.delete(noteId)
 }
 
@@ -65,5 +72,6 @@ export async function deleteSubjectCascade(subjectId: string) {
   for (const d of decks) await deleteDeckCascade(d.id)
   const quizzes = await db.quizzes.where('subjectId').equals(subjectId).toArray()
   for (const q of quizzes) await deleteQuizCascade(q.id)
+  await db.practices.where('subjectId').equals(subjectId).delete()
   await db.subjects.delete(subjectId)
 }

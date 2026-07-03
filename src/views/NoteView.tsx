@@ -6,6 +6,7 @@ import { newCardScheduling } from '../srs'
 import { Markdown } from '../markdown'
 import { Modal } from '../components/Modal'
 import { Sketchpad } from '../components/Sketchpad'
+import { PracticeGenModal } from '../components/PracticeGenModal'
 import {
   aiErrorMessage,
   generateFlashcards,
@@ -28,7 +29,7 @@ export function NoteView({ noteId }: { noteId: string }) {
   const [saved, setSaved] = useState(true)
   const [tab, setTab] = useState<'edit' | 'preview'>('edit')
   const [showSketch, setShowSketch] = useState(false)
-  const [aiModal, setAiModal] = useState<'cards' | 'quiz' | 'summary' | null>(null)
+  const [aiModal, setAiModal] = useState<'cards' | 'quiz' | 'summary' | 'practice' | null>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
   const saveTimer = useRef<number>(undefined)
 
@@ -214,6 +215,9 @@ export function NoteView({ noteId }: { noteId: string }) {
         <button className="btn btn-sm" disabled={aiDisabled} onClick={() => setAiModal('quiz')}>
           ⚡ Quiz me on this
         </button>
+        <button className="btn btn-sm" disabled={aiDisabled} onClick={() => setAiModal('practice')}>
+          ⚡ Example questions
+        </button>
         <button className="btn btn-sm" disabled={aiDisabled} onClick={() => setAiModal('summary')}>
           ⚡ Key points
         </button>
@@ -247,6 +251,15 @@ export function NoteView({ noteId }: { noteId: string }) {
           noteId={note.id}
           noteTitle={effTitle}
           noteContent={effContent}
+          onClose={() => setAiModal(null)}
+        />
+      )}
+      {aiModal === 'practice' && (
+        <PracticeGenModal
+          subjectId={note.subjectId}
+          noteId={note.id}
+          initialTopic={effTitle}
+          context={effContent}
           onClose={() => setAiModal(null)}
         />
       )}

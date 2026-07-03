@@ -65,6 +65,32 @@ const mockQuiz = {
     },
   ],
 }
+const mockTranscription = {
+  title: 'Electrolysis',
+  markdown:
+    '## Electrolysis\n\nIonic compounds conduct when molten. At the cathode:\n\n$$\\text{Cu}^{2+} + 2e^- \\rightarrow \\text{Cu}$$\n\n*[Diagram: electrolysis cell with copper electrodes]*',
+}
+const mockPractice = {
+  title: 'Projectile motion practice',
+  items: [
+    {
+      question: 'A ball is thrown horizontally at $12\\,\\text{m/s}$ from a 20 m cliff. How long until it lands?',
+      solution: 'Vertical: $s = \\frac{1}{2}gt^2$ so $t = \\sqrt{2s/g} = \\sqrt{40/9.8} \\approx 2.0\\,\\text{s}$.',
+      marks: 3,
+    },
+    {
+      question: 'State the horizontal range of the same ball.',
+      solution: 'Range $= v_x t = 12 \\times 2.0 = 24\\,\\text{m}$.',
+      marks: 2,
+    },
+  ],
+}
+const mockMark = (studentAnswer) => ({
+  verdict: /lambda/i.test(studentAnswer) ? 'correct' : 'partial',
+  feedback: /lambda/i.test(studentAnswer)
+    ? 'Spot on — you identified the relationship between speed, frequency and wavelength.'
+    : 'You have the right idea, but a full-marks answer needs the working shown step by step.',
+})
 await page.route('https://api.anthropic.com/**', async (route) => {
   const req = route.request()
   if (req.method() === 'OPTIONS') {
@@ -76,6 +102,13 @@ await page.route('https://api.anthropic.com/**', async (route) => {
     const props = body?.output_config?.format?.schema?.properties ?? {}
     if (props.cards) text = JSON.stringify(mockCards)
     else if (props.questions) text = JSON.stringify(mockQuiz)
+    else if (props.markdown) text = JSON.stringify(mockTranscription)
+    else if (props.items) text = JSON.stringify(mockPractice)
+    else if (props.verdict) {
+      const userText = JSON.stringify(body?.messages ?? '')
+      const m = userText.match(/Student's answer: ([^"\\]*)/)
+      text = JSON.stringify(mockMark(m?.[1] ?? ''))
+    }
   } catch {
     /* GET (models) etc. */
   }
@@ -180,13 +213,65 @@ await page.getByText('Correct!').waitFor()
 check('mcq marks correct answer', true)
 await shot('06-quiz-mcq')
 await page.getByRole('button', { name: 'Next' }).click()
-// Q2: short answer
+// Q2: short answer, AI-marked (mocked): answer contains "lambda" → correct
 await page.locator('.quiz-short-input').fill('v equals f times lambda')
-await page.getByRole('button', { name: 'Show model answer' }).click()
-await page.getByRole('button', { name: 'I got it right' }).click()
+await page.getByRole('button', { name: /Mark my answer/ }).click()
+await page.getByText('✅ Correct').waitFor()
+check('AI marks the written answer', true)
+await shot('07-quiz-ai-marked')
+await page.getByRole('button', { name: /Count as right/ }).click()
 await page.getByText('2 / 2 (100%)').waitFor()
 check('quiz scored and saved', true)
-await shot('07-quiz-result')
+
+// ---- 7b. Photo → note (mocked vision) ----
+await page.goto(BASE + '/#/')
+await page.getByRole('link', { name: /Physics/ }).click()
+await page.getByRole('button', { name: /Note from photos/ }).click()
+await page.locator('.modal input[type=file]').setInputFiles('public/icons/icon-192.png')
+await page.locator('.photo-thumb').waitFor()
+await page.getByRole('button', { name: /Transcribe 1 photo/ }).click()
+await page.getByPlaceholder('Note title').waitFor()
+check(
+  'photo transcribed into a titled note',
+  (await page.getByPlaceholder('Note title').inputValue()) === 'Electrolysis',
+)
+const photoNoteContent = await page.locator('.editor-text').inputValue()
+check(
+  'photo note embeds transcription and original photo',
+  photoNoteContent.includes('Electrolysis') && photoNoteContent.includes('img:'),
+)
+await shot('13-photo-note')
+
+// ---- 7c. Practice questions (mocked) ----
+await page.goto(BASE + '/#/')
+await page.getByRole('link', { name: /Physics/ }).click()
+await page.getByRole('button', { name: /Example questions/ }).click()
+await page.getByPlaceholder('e.g. Integration by parts').fill('Projectile motion')
+await page.getByRole('button', { name: 'Generate', exact: true }).click()
+await page.getByRole('heading', { name: 'Question 1' }).waitFor()
+check('practice set generated', (await page.locator('.practice-q').count()) === 2)
+// reveal a worked solution
+await page
+  .locator('.practice-q')
+  .first()
+  .getByRole('button', { name: 'Show solution' })
+  .click()
+await page.getByText('Worked solution').first().waitFor()
+check('worked solution reveals', true)
+// AI-mark a typed answer (no "lambda" → partial verdict)
+await page.locator('.practice-answer').first().fill('about two seconds I think')
+await page.locator('.practice-q').first().getByRole('button', { name: /Mark my answer/ }).click()
+await page.getByText('🟡 Partly there').waitFor()
+check('practice answer AI-marked', true)
+await shot('14-practice-marked')
+
+// ---- 7d. Global search ----
+await page.goto(BASE + '/#/search')
+await page.locator('.search-input').fill('wave')
+await page.getByRole('heading', { name: 'Notes', exact: true }).waitFor()
+const noteHits = await page.locator('.search-hit').count()
+check('search finds notes and cards', noteHits >= 2)
+await shot('15-search')
 
 // ---- 8. Dashboard stats after studying ----
 await page.goto(BASE + '/#/')

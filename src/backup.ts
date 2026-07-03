@@ -19,6 +19,8 @@ export interface BackupFile {
   attempts: unknown[]
   reviews: unknown[]
   images: BackupImage[]
+  /** Added later — absent in older backups. */
+  practices?: unknown[]
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -39,7 +41,7 @@ function base64ToBlob(b64: string, mime: string): Blob {
 }
 
 export async function exportBackup(): Promise<Blob> {
-  const [subjects, notes, decks, cards, quizzes, attempts, reviews, rawImages] =
+  const [subjects, notes, decks, cards, quizzes, attempts, reviews, rawImages, practices] =
     await Promise.all([
       db.subjects.toArray(),
       db.notes.toArray(),
@@ -49,6 +51,7 @@ export async function exportBackup(): Promise<Blob> {
       db.attempts.toArray(),
       db.reviews.toArray(),
       db.images.toArray(),
+      db.practices.toArray(),
     ])
   const images: BackupImage[] = []
   for (const img of rawImages) {
@@ -71,6 +74,7 @@ export async function exportBackup(): Promise<Blob> {
     attempts,
     reviews,
     images,
+    practices,
   }
   return new Blob([JSON.stringify(payload)], { type: 'application/json' })
 }
@@ -98,7 +102,17 @@ export async function importBackup(file: File): Promise<void> {
   }
   await db.transaction(
     'rw',
-    [db.subjects, db.notes, db.decks, db.cards, db.quizzes, db.attempts, db.reviews, db.images],
+    [
+      db.subjects,
+      db.notes,
+      db.decks,
+      db.cards,
+      db.quizzes,
+      db.attempts,
+      db.reviews,
+      db.images,
+      db.practices,
+    ],
     async () => {
       await Promise.all([
         db.subjects.clear(),
@@ -109,6 +123,7 @@ export async function importBackup(file: File): Promise<void> {
         db.attempts.clear(),
         db.reviews.clear(),
         db.images.clear(),
+        db.practices.clear(),
       ])
       await db.subjects.bulkAdd(data.subjects as never[])
       await db.notes.bulkAdd(data.notes as never[])
@@ -121,6 +136,7 @@ export async function importBackup(file: File): Promise<void> {
           ({ cardId, grade, at }) => ({ cardId, grade, at }),
         ) as never[],
       )
+      await db.practices.bulkAdd((data.practices ?? []) as never[])
       await db.images.bulkAdd(
         data.images.map((i) => ({
           id: i.id,

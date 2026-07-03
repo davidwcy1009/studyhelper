@@ -7,11 +7,15 @@ A study app for iPad and MacBook: **notes, flashcards, spaced repetition, and se
 | Feature | Details |
 |---|---|
 | **Notes** | Markdown editor with live preview, proper maths rendering (`$x^2$` → KaTeX), highlights, pasted photos/screenshots, and an Apple Pencil sketch canvas |
+| **Photo → notes** | Snap a textbook page, whiteboard or handwritten notes — Claude transcribes them into a typed note, equations included |
 | **Flashcards** | Decks per subject, spaced repetition (Anki-style SM-2) — the app tells her exactly which cards to review each day |
 | **Self-testing** | Exam-style quizzes (multiple choice + short answer) with score history |
+| **AI marking** | She writes an answer; Claude marks it like an examiner — what was right, what was missing, what full marks needs |
+| **Practice questions** | Generates homework- and test-style example questions on any topic, each with a hidden worked solution |
 | **AI (Claude)** | One tap turns a note into flashcards or a quiz; explains wrong answers like a tutor; summarises notes into key points |
+| **Search** | Global search (⌘K) across notes, cards, decks, quizzes and practice sets |
 | **Dashboard** | Cards due today, study streak, exam countdowns |
-| **Privacy** | Everything is stored on-device (IndexedDB). Nothing is uploaded anywhere, except the note text sent to the Claude API when she uses an AI button |
+| **Privacy** | Everything is stored on-device (IndexedDB). Nothing is uploaded anywhere, except the content sent to the Claude API when she uses an AI button |
 
 ## Getting it onto her devices
 

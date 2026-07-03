@@ -233,6 +233,173 @@ Return only markdown: a short bullet list of the key points, definitions and for
   return firstText(res)
 }
 
+// ---------- Photo → notes (vision) ----------
+
+const transcriptionSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title', 'markdown'],
+  properties: {
+    title: { type: 'string', description: 'A short title for the note' },
+    markdown: { type: 'string', description: 'The transcribed content as markdown' },
+  },
+} as const
+
+export interface PhotoInput {
+  base64: string
+  mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+}
+
+export async function transcribePhotos(
+  photos: PhotoInput[],
+  hint?: string,
+): Promise<{ title: string; markdown: string }> {
+  const res = await client().messages.create({
+    model: getModel(),
+    max_tokens: 16000,
+    thinking: { type: 'adaptive' },
+    output_config: { format: { type: 'json_schema', schema: transcriptionSchema } },
+    system: `You transcribe photos of study material (textbook pages, whiteboards, handwritten notes, worksheets) into clean, well-structured markdown notes. ${STYLE_NOTES}
+Rules:
+- Preserve the structure: headings, lists, tables, emphasis.
+- Transcribe ALL equations and chemical formulas into LaTeX.
+- For diagrams or figures, add a brief italic description like *[Diagram: forces acting on an inclined plane]*.
+- Fix obvious OCR-style errors, but never invent content that is not in the photo.
+- If multiple photos are given, merge them into one coherent note in order.`,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          ...photos.map((p) => ({
+            type: 'image' as const,
+            source: { type: 'base64' as const, media_type: p.mediaType, data: p.base64 },
+          })),
+          {
+            type: 'text' as const,
+            text: `Transcribe ${photos.length > 1 ? 'these photos' : 'this photo'} into a markdown note.${
+              hint ? ` Context from the student: ${hint}` : ''
+            }`,
+          },
+        ],
+      },
+    ],
+  })
+  return JSON.parse(firstText(res)) as { title: string; markdown: string }
+}
+
+// ---------- AI marking ----------
+
+export type MarkVerdict = 'correct' | 'partial' | 'incorrect'
+
+export interface MarkResult {
+  verdict: MarkVerdict
+  feedback: string
+}
+
+const markingSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['verdict', 'feedback'],
+  properties: {
+    verdict: { type: 'string', enum: ['correct', 'partial', 'incorrect'] },
+    feedback: {
+      type: 'string',
+      description: 'Markdown feedback: what was right, what was missing, what full marks needs',
+    },
+  },
+} as const
+
+export async function markAnswer(opts: {
+  question: string
+  modelAnswer: string
+  userAnswer: string
+}): Promise<MarkResult> {
+  const res = await client().messages.create({
+    model: getModel(),
+    max_tokens: 4096,
+    thinking: { type: 'adaptive' },
+    output_config: { format: { type: 'json_schema', schema: markingSchema } },
+    system: `You are an experienced A-level examiner marking a student's written answer against a model answer. ${STYLE_NOTES}
+Rules:
+- Mark on substance, not wording — accept different phrasing, order, or notation if the physics/maths/content is right.
+- "correct" = would get full or nearly full marks; "partial" = some key points but real gaps; "incorrect" = misses the point or contains a significant error.
+- Feedback: 2–5 sentences. Start with what they got right, then exactly what is missing or wrong, then what a full-marks answer must include. Be encouraging but honest.`,
+    messages: [
+      {
+        role: 'user',
+        content: `Question: ${opts.question}\n\nModel answer: ${opts.modelAnswer}\n\nStudent's answer: ${opts.userAnswer}`,
+      },
+    ],
+  })
+  return JSON.parse(firstText(res)) as MarkResult
+}
+
+// ---------- Practice question sets ----------
+
+const practiceSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title', 'items'],
+  properties: {
+    title: { type: 'string', description: 'Short title for this practice set' },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['question', 'solution', 'marks'],
+        properties: {
+          question: { type: 'string', description: 'The question, markdown' },
+          solution: {
+            type: 'string',
+            description: 'Full worked solution / model answer, markdown, showing the steps',
+          },
+          marks: { type: 'integer', description: 'Marks the question would carry, 1-10' },
+        },
+      },
+    },
+  },
+} as const
+
+export interface GeneratedPractice {
+  title: string
+  items: { question: string; solution: string; marks: number }[]
+}
+
+export async function generatePractice(opts: {
+  topic: string
+  context?: string
+  count: number
+  style: 'homework' | 'exam' | 'mix'
+}): Promise<GeneratedPractice> {
+  const styleText = {
+    homework: 'homework-style practice questions (build fluency: straightforward to moderately challenging, plenty of applied calculation/short-response work)',
+    exam: 'exam-style questions (use exam command words like state/explain/evaluate/derive, realistic mark weightings, include at least one multi-part or stretch question)',
+    mix: 'a mix of homework-style fluency questions and exam-style questions, ordered from easier to harder',
+  }[opts.style]
+  const res = await client().messages.create({
+    model: getModel(),
+    max_tokens: 16000,
+    thinking: { type: 'adaptive' },
+    output_config: { format: { type: 'json_schema', schema: practiceSchema } },
+    system: `You write practice questions with full worked solutions for a sixth-form student. ${STYLE_NOTES}
+Rules:
+- Write ${styleText}.
+- Every solution must show the working step by step, not just the final answer.
+- Use realistic numbers and scenarios. Vary the question formats.
+- If topic notes are provided, stay within their scope; otherwise use the standard A-level/IB treatment of the topic.`,
+    messages: [
+      {
+        role: 'user',
+        content: `Write ${opts.count} practice questions on: ${opts.topic}${
+          opts.context ? `\n\nThe student's notes on this topic:\n${opts.context}` : ''
+        }`,
+      },
+    ],
+  })
+  return JSON.parse(firstText(res)) as GeneratedPractice
+}
+
 /** Cheap round-trip to confirm the key works. */
 export async function testApiKey(): Promise<void> {
   await client().models.retrieve(getModel())

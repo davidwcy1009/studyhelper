@@ -1041,6 +1041,122 @@ label > textarea {
   cursor: crosshair;
 }
 
+/* ===== Photo → note ===== */
+.photo-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.photo-thumb {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.photo-add {
+  width: 92px;
+  height: 92px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* ===== Practice sets ===== */
+.practice-q {
+  margin: 14px 0;
+}
+.practice-q-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.practice-q-head h3 {
+  margin: 0;
+}
+.practice-answer {
+  margin: 10px 0;
+  min-height: 70px;
+}
+.mark-feedback {
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 10px 0;
+}
+.mark-feedback h4 {
+  margin: 0 0 6px;
+}
+.mark-feedback.correct {
+  background: var(--ok-bg);
+}
+.mark-feedback.partial {
+  background: var(--warn-bg);
+}
+.mark-feedback.incorrect {
+  background: var(--no-bg);
+}
+.grade-btn.suggested {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* ===== Search ===== */
+.search-input {
+  font-size: 1.1rem;
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin: 8px 0 16px;
+}
+.search-hit {
+  align-items: flex-start;
+}
+.search-hit-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.search-snippet {
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  overflow-wrap: break-word;
+}
+.search-hit mark {
+  background: #ffe28a;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+@media (prefers-color-scheme: dark) {
+  .search-hit mark {
+    background: #6b5714;
+    color: #fff;
+  }
+}
+
 /* ===== Small screens ===== */
 @media (max-width: 640px) {
   .stat-row {

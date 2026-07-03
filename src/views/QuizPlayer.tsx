@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, deleteQuizCascade } from '../db'
 import { newId, type QuizQuestion } from '../types'
 import { Markdown } from '../markdown'
-import { aiErrorMessage, explainMistake, hasApiKey } from '../ai'
+import { aiErrorMessage, explainMistake, hasApiKey, markAnswer, type MarkResult } from '../ai'
+import { MarkFeedback } from './PracticeView'
 import { go, SubjectChip } from '../App'
 
 type Phase = 'intro' | 'playing' | 'done'
@@ -204,35 +205,113 @@ function Question({
     )
   }
 
-  // short answer — self-marked
+  // short answer — AI-marked when a key is set, self-marked otherwise
+  return (
+    <ShortAnswer
+      prompt={q.prompt}
+      answer={q.answer}
+      explanation={q.explanation}
+      shortAnswer={shortAnswer}
+      setShortAnswer={setShortAnswer}
+      revealed={revealed}
+      setRevealed={setRevealed}
+      onAnswered={onAnswered}
+    />
+  )
+}
+
+function ShortAnswer({
+  prompt,
+  answer,
+  explanation,
+  shortAnswer,
+  setShortAnswer,
+  revealed,
+  setRevealed,
+  onAnswered,
+}: {
+  prompt: string
+  answer: string
+  explanation?: string
+  shortAnswer: string
+  setShortAnswer: (v: string) => void
+  revealed: boolean
+  setRevealed: (v: boolean) => void
+  onAnswered: (correct: boolean) => void
+}) {
+  const [mark, setMark] = useState<MarkResult | null>(null)
+  const [marking, setMarking] = useState(false)
+  const [markError, setMarkError] = useState('')
+
+  const doMark = async () => {
+    setMarking(true)
+    setMarkError('')
+    try {
+      setMark(await markAnswer({ question: prompt, modelAnswer: answer, userAnswer: shortAnswer }))
+      setRevealed(true)
+    } catch (e) {
+      setMarkError(aiErrorMessage(e))
+    } finally {
+      setMarking(false)
+    }
+  }
+
+  // Claude suggests the verdict; she confirms how it counts.
+  const suggestRight = mark?.verdict === 'correct'
+
   return (
     <div className="quiz-question">
-      <Markdown source={q.prompt} className="quiz-prompt" />
+      <Markdown source={prompt} className="quiz-prompt" />
       <textarea
         className="quiz-short-input"
-        placeholder="Write your answer, then compare with the model answer…"
+        placeholder={
+          hasApiKey()
+            ? 'Write your answer — Claude can mark it like an examiner…'
+            : 'Write your answer, then compare with the model answer…'
+        }
         value={shortAnswer}
         onChange={(e) => setShortAnswer(e.target.value)}
         disabled={revealed}
       />
+      {markError && <p className="error">{markError}</p>}
       {!revealed ? (
-        <button className="btn btn-primary btn-big" onClick={() => setRevealed(true)}>
-          Show model answer
-        </button>
+        <div className="head-actions">
+          {hasApiKey() && (
+            <button
+              className="btn btn-primary"
+              disabled={!shortAnswer.trim() || marking}
+              onClick={doMark}
+            >
+              {marking ? 'Marking…' : '⚡ Mark my answer'}
+            </button>
+          )}
+          <button className="btn" disabled={marking} onClick={() => setRevealed(true)}>
+            Show model answer
+          </button>
+        </div>
       ) : (
         <>
+          {mark && <MarkFeedback mark={mark} />}
           <div className="model-answer">
             <h4>Model answer</h4>
-            <Markdown source={q.answer} />
-            {q.explanation && <Markdown source={q.explanation} className="hint" />}
+            <Markdown source={answer} />
+            {explanation && <Markdown source={explanation} className="hint" />}
           </div>
-          <ExplainMore question={q.prompt} correctAnswer={q.answer} userAnswer={shortAnswer} />
+          {!mark && (
+            <ExplainMore question={prompt} correctAnswer={answer} userAnswer={shortAnswer} />
+          )}
           <div className="grade-row practice">
-            <button className="btn grade-btn grade-0" onClick={() => onAnswered(false)}>
-              <span>I missed it</span>
+            <button
+              className={`btn grade-btn grade-0 ${mark && !suggestRight ? 'suggested' : ''}`}
+              onClick={() => onAnswered(false)}
+            >
+              <span>{mark && !suggestRight ? 'Count as wrong ✓' : 'I missed it'}</span>
             </button>
-            <button className="btn grade-btn grade-2" onClick={() => onAnswered(true)}>
-              <span>I got it right</span>
+            <button
+              className={`btn grade-btn grade-2 ${suggestRight ? 'suggested' : ''}`}
+              onClick={() => onAnswered(true)}
+            >
+              <span>{suggestRight ? 'Count as right ✓' : 'I got it right'}</span>
             </button>
           </div>
         </>
