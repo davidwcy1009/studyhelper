@@ -12,10 +12,12 @@ import {
   setModel,
   testApiKey,
 } from '../ai'
+import { applyTheme, getTheme, setTheme, THEMES, type ThemeId } from '../theme'
 
 export function Settings() {
   const [key, setKey] = useState(getApiKey())
   const [model, setModelState] = useState(getModel())
+  const [theme, setThemeState] = useState<ThemeId>(getTheme())
   const [keyStatus, setKeyStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [importMsg, setImportMsg] = useState('')
@@ -138,6 +140,35 @@ export function Settings() {
             ))}
           </select>
         </label>
+      </section>
+
+      <section className="panel">
+        <h2>Appearance</h2>
+        <p className="hint">
+          Pick a colour theme. “Auto” follows your device’s light/dark setting. Saved on this
+          device.
+        </p>
+        <div className="theme-grid">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              className={`theme-card ${theme === t.id ? 'active' : ''}`}
+              aria-pressed={theme === t.id}
+              onClick={() => {
+                setThemeState(t.id)
+                setTheme(t.id)
+                applyTheme(t.id)
+              }}
+            >
+              <span className="theme-swatch" style={{ background: t.bg }}>
+                {t.dots.map((c, i) => (
+                  <span key={i} className="theme-dot" style={{ background: c }} />
+                ))}
+              </span>
+              <span className="theme-name">{t.label}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="panel">

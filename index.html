@@ -7,8 +7,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Study" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9f9f7" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d0d0d" />
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      // "auto" (or unset) leaves prefers-color-scheme in charge.
+      try {
+        var t = localStorage.getItem('sh.theme')
+        if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
+    </script>
     <link rel="icon" href="./icons/icon-192.png" type="image/png" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <title>Study Helper</title>

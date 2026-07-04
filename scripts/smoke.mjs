@@ -164,7 +164,13 @@ check('subject created', true)
 
 // ---- 3. Create a note with markdown + math ----
 await page.getByRole('button', { name: '+ New note' }).click()
+// A note opens in the distraction-free reading view, not the editor.
+await page.locator('.note-read').waitFor()
+check('note opens in reading mode', await page.locator('.note-read').isVisible())
+check('editor hidden in reading mode', !(await page.locator('.editor-text').isVisible()))
 await page.getByPlaceholder('Note title').fill('Waves')
+await page.locator('.read-bar button').click()
+await page.locator('.editor-text').waitFor()
 await page
   .locator('.editor-text')
   .fill(
@@ -173,6 +179,14 @@ await page
 await page.getByText('Saved', { exact: true }).waitFor()
 check('note autosaves', true)
 check('math renders in preview', (await page.locator('.editor-preview .katex').count()) > 0)
+// Reading view reflects the edit, and tap-to-edit round-trips back.
+await page.getByRole('button', { name: 'Done' }).click()
+await page.locator('.note-read').waitFor()
+check('reading view renders the note', (await page.locator('.note-read .katex').count()) > 0)
+check('reading view hides the editor', !(await page.locator('.editor-text').isVisible()))
+await page.locator('.note-read').click()
+await page.locator('.editor-text').waitFor()
+check('tap-to-edit returns to the editor', await page.locator('.editor-text').isVisible())
 const noteUrl = page.url()
 await shot('02-note-editor')
 
@@ -199,7 +213,36 @@ check(
     .catch(() => false),
 )
 
+// ---- 4b. Drag-resize the image in the preview ----
+const handle = page.locator('.editor-preview .img-resize-handle').first()
+await handle.waitFor()
+const hb = await handle.boundingBox()
+await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2)
+await page.mouse.down()
+await page.mouse.move(hb.x - 120, hb.y - 90, { steps: 8 })
+await page.mouse.up()
+await page.waitForTimeout(200)
+const resizedSrc = await page.locator('.editor-text').inputValue()
+check(
+  'image resize writes a pixel width into the note source',
+  /<img[^>]*img:[0-9a-fA-F-]{36}[^>]*width="\d+"/.test(resizedSrc),
+)
+await shot('18-image-resized')
+// The width survives a reload (it lives in the note markdown, not just the DOM).
+await page.getByText('Saved', { exact: true }).waitFor()
+await page.reload()
+await page.locator('.note-read').waitFor()
+check(
+  'resized width persists in the reading view',
+  await page
+    .locator('.note-read img')
+    .first()
+    .evaluate((el) => el.getAttribute('width') !== null)
+    .catch(() => false),
+)
+
 // ---- 5. AI flashcards (mocked) ----
+await page.locator('.ai-bar').waitFor()
 await page.getByRole('button', { name: /Flashcards from note/ }).click()
 await page.getByRole('button', { name: 'Generate', exact: true }).click()
 await page.locator('.gen-card').first().waitFor()
@@ -254,6 +297,8 @@ check(
   'photo transcribed into a titled note',
   (await page.getByPlaceholder('Note title').inputValue()) === 'Electrolysis',
 )
+await page.locator('.read-bar button').click()
+await page.locator('.editor-text').waitFor()
 const photoNoteContent = await page.locator('.editor-text').inputValue()
 check(
   'photo note embeds transcription and original photo',
@@ -337,6 +382,28 @@ check('backup exports a file', (await download.suggestedFilename()).includes('st
 check('key test works', true)
 await shot('10-settings')
 
+// ---- 10b. Appearance / theme picker ----
+check('appearance theme picker present', (await page.locator('.theme-card').count()) >= 6)
+await page.locator('.theme-card', { hasText: 'Ocean' }).click()
+await page.waitForTimeout(150)
+const themed = await page.evaluate(() => ({
+  attr: document.documentElement.getAttribute('data-theme'),
+  pageColor: getComputedStyle(document.documentElement).getPropertyValue('--page').trim().toLowerCase(),
+  stored: localStorage.getItem('sh.theme'),
+  meta: (document.querySelector('meta[name="theme-color"]')?.getAttribute('content') ?? '').toLowerCase(),
+}))
+check('selecting a theme sets data-theme + persists', themed.attr === 'ocean' && themed.stored === 'ocean')
+check('theme swaps the design tokens', themed.pageColor === '#0b1e2a')
+check('status-bar theme-color follows the theme', themed.meta === '#0b1e2a')
+await shot('17-theme-ocean')
+// Return to Auto so downstream screenshots aren't themed.
+await page.locator('.theme-card', { hasText: 'Auto' }).click()
+await page.waitForTimeout(100)
+check(
+  'auto clears the data-theme override',
+  (await page.evaluate(() => document.documentElement.getAttribute('data-theme'))) === null,
+)
+
 // ---- 11. iPad-sized layout ----
 await page.setViewportSize({ width: 820, height: 1180 })
 await page.goto(BASE + '/#/')
@@ -344,10 +411,12 @@ await page.waitForTimeout(300)
 await shot('11-ipad-dashboard')
 await page.goto(noteUrl)
 await page.waitForTimeout(400)
-check(
-  'narrow layout shows edit/preview toggle',
-  await page.locator('.edit-preview-toggle').isVisible(),
-)
+check('note opens in reading mode on iPad', await page.locator('.note-read').isVisible())
+await page.locator('.read-bar button').click()
+await page.locator('.editor-text').waitFor()
+check('iPad editor shows the textarea', await page.locator('.editor-text').isVisible())
+// On iPad width the live-preview pane is dropped in favour of the reading view.
+check('iPad edit hides the split preview pane', !(await page.locator('.editor-preview').isVisible()))
 await shot('12-ipad-note')
 
 await browser.close()

@@ -15,6 +15,8 @@
   --warn-bg: #fff7e6;
   --ok-bg: #eefaee;
   --no-bg: #fdeeee;
+  --mark-bg: #ffe28a;
+  --mark-text: #0b0b0b;
 
   --cat-0: #2a78d6;
   --cat-1: #1baf7a;
@@ -29,8 +31,41 @@
   --shadow: 0 1px 2px rgba(11, 11, 11, 0.05), 0 4px 16px rgba(11, 11, 11, 0.06);
 }
 
+/* Dark tokens, shared by the explicit "Dark" theme and by "Auto" when the OS
+   prefers dark. Auto = no data-theme attribute (see src/theme.ts). */
+:root[data-theme='dark'] {
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --hairline: #2c2c2a;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #3987e5;
+  --good: #0ca30c;
+  --good-text: #0ca30c;
+  --danger: #e66767;
+  --warn-bg: #2a2410;
+  --ok-bg: #12240f;
+  --no-bg: #2b1414;
+  --mark-bg: #6b5714;
+  --mark-text: #ffffff;
+
+  --cat-0: #3987e5;
+  --cat-1: #199e70;
+  --cat-2: #c98500;
+  --cat-3: #008300;
+  --cat-4: #9085e9;
+  --cat-5: #e66767;
+  --cat-6: #d55181;
+  --cat-7: #d95926;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]),
+  :root[data-theme='auto'] {
     --page: #0d0d0d;
     --surface: #1a1a19;
     --ink: #ffffff;
@@ -45,6 +80,8 @@
     --warn-bg: #2a2410;
     --ok-bg: #12240f;
     --no-bg: #2b1414;
+    --mark-bg: #6b5714;
+    --mark-text: #ffffff;
 
     --cat-0: #3987e5;
     --cat-1: #199e70;
@@ -57,6 +94,162 @@
 
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.35);
   }
+}
+
+/* ===== Named themes (teen-friendly palettes) ===== */
+:root[data-theme='midnight'] {
+  --page: #12122b;
+  --surface: #1c1c3d;
+  --ink: #f4f2ff;
+  --ink-2: #b9b4dd;
+  --muted: #8480a8;
+  --hairline: #2e2e52;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #8b7bf0;
+  --accent-ink: #14122b;
+  --good: #3ad07f;
+  --good-text: #3ad07f;
+  --danger: #ff6b8a;
+  --warn-bg: #2e2714;
+  --ok-bg: #14301f;
+  --no-bg: #301622;
+  --mark-bg: #4a3d80;
+  --mark-text: #ffffff;
+
+  --cat-0: #7b9cf0;
+  --cat-1: #35c69a;
+  --cat-2: #e0a94a;
+  --cat-3: #4bc46f;
+  --cat-4: #b39bff;
+  --cat-5: #ff7a8a;
+  --cat-6: #ef8fc0;
+  --cat-7: #f0885a;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='sunset'] {
+  --page: #fff5ee;
+  --surface: #fffaf6;
+  --ink: #3a1f14;
+  --ink-2: #7a5445;
+  --muted: #a98a7c;
+  --hairline: #f0dccf;
+  --border: rgba(58, 31, 20, 0.1);
+  --accent: #d64d2c;
+  --accent-ink: #ffffff;
+  --good: #1a9d5c;
+  --good-text: #0f7a44;
+  --danger: #d0342f;
+  --warn-bg: #fff0d9;
+  --ok-bg: #e5f6ea;
+  --no-bg: #fde4e0;
+  --mark-bg: #ffd9a3;
+  --mark-text: #3a1f14;
+
+  --cat-0: #2f7fd6;
+  --cat-1: #1aa877;
+  --cat-2: #e0912a;
+  --cat-3: #2e8b3d;
+  --cat-4: #7b5bd6;
+  --cat-5: #e2593a;
+  --cat-6: #e06aa0;
+  --cat-7: #ef7434;
+
+  --shadow: 0 1px 2px rgba(58, 31, 20, 0.06), 0 4px 16px rgba(58, 31, 20, 0.08);
+}
+
+:root[data-theme='forest'] {
+  --page: #f2f7f0;
+  --surface: #fbfdf9;
+  --ink: #14261a;
+  --ink-2: #46614e;
+  --muted: #7d9583;
+  --hairline: #d9e6da;
+  --border: rgba(20, 38, 26, 0.1);
+  --accent: #2e7d4f;
+  --accent-ink: #ffffff;
+  --good: #1a8f4c;
+  --good-text: #0f7a44;
+  --danger: #c53b32;
+  --warn-bg: #f7f0d8;
+  --ok-bg: #e2f3e5;
+  --no-bg: #fbe6e2;
+  --mark-bg: #cdeaa0;
+  --mark-text: #14261a;
+
+  --cat-0: #2f7fd6;
+  --cat-1: #1a9e6f;
+  --cat-2: #cf8c1e;
+  --cat-3: #2e7d4f;
+  --cat-4: #6a5bc4;
+  --cat-5: #d0453b;
+  --cat-6: #d76aa0;
+  --cat-7: #e0682f;
+
+  --shadow: 0 1px 2px rgba(20, 38, 26, 0.06), 0 4px 16px rgba(20, 38, 26, 0.08);
+}
+
+:root[data-theme='grape'] {
+  --page: #1e1330;
+  --surface: #2a1e42;
+  --ink: #f6f0ff;
+  --ink-2: #c9b8e6;
+  --muted: #9083ab;
+  --hairline: #3b2c58;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #c07be0;
+  --accent-ink: #1e1330;
+  --good: #4ecb86;
+  --good-text: #4ecb86;
+  --danger: #ff7091;
+  --warn-bg: #33291a;
+  --ok-bg: #1a3324;
+  --no-bg: #331a2a;
+  --mark-bg: #5a3d70;
+  --mark-text: #ffffff;
+
+  --cat-0: #8aa0f0;
+  --cat-1: #3ec9a0;
+  --cat-2: #e0aa4a;
+  --cat-3: #58c877;
+  --cat-4: #c493ff;
+  --cat-5: #ff7a95;
+  --cat-6: #f295c8;
+  --cat-7: #f0925f;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='ocean'] {
+  --page: #0b1e2a;
+  --surface: #12303f;
+  --ink: #eef8fb;
+  --ink-2: #a8c8d4;
+  --muted: #6f92a0;
+  --hairline: #1e4353;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #33b3c9;
+  --accent-ink: #04202a;
+  --good: #3ccf8f;
+  --good-text: #3ccf8f;
+  --danger: #ff7080;
+  --warn-bg: #2a2a14;
+  --ok-bg: #123626;
+  --no-bg: #30181c;
+  --mark-bg: #2f5a6b;
+  --mark-text: #ffffff;
+
+  --cat-0: #4aa8e0;
+  --cat-1: #2fc7a2;
+  --cat-2: #e0b04a;
+  --cat-3: #45c47a;
+  --cat-4: #8f9bf0;
+  --cat-5: #ff7a86;
+  --cat-6: #f08fbf;
+  --cat-7: #f0925f;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Base ===== */
@@ -582,17 +775,34 @@ label > textarea {
   .editor-split {
     grid-template-columns: 1fr;
   }
-  .editor-split.show-edit .editor-preview {
-    display: none;
-  }
-  .editor-split.show-preview .editor-text {
+  /* On phones the live preview pane is dropped to save space — tap Done to
+     return to the full-width reading view instead. */
+  .editor-split .editor-preview {
     display: none;
   }
 }
-@media (min-width: 900px) {
-  .edit-preview-toggle {
-    display: none;
-  }
+
+/* ===== Note reading mode (default when a note opens) ===== */
+.read-bar {
+  display: flex;
+  justify-content: flex-end;
+  position: sticky;
+  top: calc(56px + env(safe-area-inset-top));
+  z-index: 10;
+  background: color-mix(in srgb, var(--page) 92%, transparent);
+  backdrop-filter: blur(10px);
+  padding: 6px 0;
+}
+.note-read {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 4px 2px 40px;
+  min-height: 40vh;
+  line-height: 1.7;
+  cursor: text;
+}
+.note-read .md {
+  font-size: 1.02rem;
 }
 
 .ai-bar {
@@ -622,6 +832,39 @@ label > textarea {
   max-width: 100%;
   border-radius: 8px;
 }
+/* Drag-to-resize (edit-mode preview only). */
+.md .img-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+}
+.md .img-wrap img {
+  display: block;
+}
+.md .img-wrap.resizing {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.img-resize-handle {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: var(--shadow);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+/* Enlarge the touch target to ~46px without moving the visible dot. */
+.img-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
 .md pre {
   background: var(--page);
   border: 1px solid var(--hairline);
@@ -639,15 +882,10 @@ label > textarea {
   color: var(--ink-2);
 }
 .md mark {
-  background: #ffe28a;
+  background: var(--mark-bg);
+  color: var(--mark-text);
   border-radius: 3px;
   padding: 0 2px;
-}
-@media (prefers-color-scheme: dark) {
-  .md mark {
-    background: #6b5714;
-    color: #fff;
-  }
 }
 .md table {
   border-collapse: collapse;
@@ -1146,15 +1384,59 @@ label > textarea {
   overflow-wrap: break-word;
 }
 .search-hit mark {
-  background: #ffe28a;
+  background: var(--mark-bg);
+  color: var(--mark-text);
   border-radius: 3px;
   padding: 0 1px;
 }
-@media (prefers-color-scheme: dark) {
-  .search-hit mark {
-    background: #6b5714;
-    color: #fff;
-  }
+
+/* ===== Theme picker (Settings › Appearance) ===== */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+.theme-card:hover {
+  transform: translateY(-1px);
+}
+.theme-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+/* Swatch shows the theme's own page colour + accent dots. */
+.theme-swatch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.2);
+}
+.theme-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.3);
+}
+.theme-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 /* ===== Small screens ===== */
