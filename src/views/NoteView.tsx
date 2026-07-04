@@ -17,6 +17,37 @@ import {
 } from '../ai'
 import { go, SubjectChip } from '../App'
 
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Rewrite the `occurrence`-th image referencing `id` in the note source to an
+ * HTML <img> carrying an explicit pixel width, so a drag-resize persists.
+ * Matches both markdown `![alt](img:id)` and a previously-widened `<img …>`.
+ */
+export function setImageWidth(
+  source: string,
+  id: string,
+  occurrence: number,
+  widthPx: number,
+): string {
+  const safe = escapeRe(id)
+  const re = new RegExp(
+    `!\\[([^\\]]*)\\]\\(img:${safe}\\)|<img\\b[^>]*?src=["']?img:${safe}["']?[^>]*?>`,
+    'g',
+  )
+  let i = -1
+  return source.replace(re, (match: string, mdLabel: string | undefined) => {
+    i += 1
+    if (i !== occurrence) return match
+    let label = mdLabel
+    if (label == null) {
+      const alt = match.match(/alt=["']([^"']*)["']/)
+      label = alt ? alt[1] : 'image'
+    }
+    return `<img src="img:${id}" alt="${label.replace(/"/g, '')}" width="${widthPx}">`
+  })
+}
+
 export function NoteView({ noteId }: { noteId: string }) {
   const note = useLiveQuery(() => db.notes.get(noteId), [noteId])
   const subject = useLiveQuery(
@@ -27,20 +58,33 @@ export function NoteView({ noteId }: { noteId: string }) {
   const [content, setContent] = useState<string | null>(null)
   const [title, setTitle] = useState<string | null>(null)
   const [saved, setSaved] = useState(true)
-  const [tab, setTab] = useState<'edit' | 'preview'>('edit')
+  const [mode, setMode] = useState<'read' | 'edit'>('read')
   const [showSketch, setShowSketch] = useState(false)
   const [aiModal, setAiModal] = useState<'cards' | 'quiz' | 'summary' | 'practice' | null>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
   const saveTimer = useRef<number>(undefined)
 
   // Hydrate local editing state once the note loads (or when switching notes).
+  // A note always opens in the distraction-free reading view.
   useEffect(() => {
     setContent(null)
     setTitle(null)
     setSaved(true)
+    setMode('read')
   }, [noteId])
   const effContent = content ?? note?.content ?? ''
   const effTitle = title ?? note?.title ?? ''
+
+  // Entering edit mode: focus the textarea once it has mounted.
+  useEffect(() => {
+    if (mode === 'edit') textRef.current?.focus()
+  }, [mode])
+  const enterEdit = () => setMode('edit')
+  const onReadClick = (e: React.MouseEvent) => {
+    // Let links inside the note behave normally; any other tap starts editing.
+    if ((e.target as HTMLElement).closest('a')) return
+    enterEdit()
+  }
 
   const scheduleSave = (nextTitle: string, nextContent: string) => {
     setSaved(false)
@@ -78,6 +122,10 @@ export function NoteView({ noteId }: { noteId: string }) {
       const pos = start + before.length + sel.length
       ta.setSelectionRange(sel ? pos + after.length : start + before.length, pos)
     })
+  }
+
+  const resizeImage = (id: string, occurrence: number, widthPx: number) => {
+    updateContent(setImageWidth(effContent, id, occurrence, widthPx))
   }
 
   const addImageBlob = async (blob: Blob, label = 'image') => {
@@ -143,6 +191,23 @@ export function NoteView({ noteId }: { noteId: string }) {
         onChange={(e) => updateTitle(e.target.value)}
       />
 
+      {mode === 'read' ? (
+        <>
+          <div className="read-bar">
+            <button className="btn btn-sm btn-primary" onClick={enterEdit}>
+              ✏️ Edit
+            </button>
+          </div>
+          <div className="note-read" onClick={onReadClick} title="Tap to edit">
+            {effContent.trim() ? (
+              <Markdown source={effContent} />
+            ) : (
+              <p className="hint">This note is empty — tap to start writing.</p>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
       <div className="editor-toolbar">
         <div className="tool-group">
           <button className="tool-btn" title="Bold" onClick={() => insert('**', '**', 'bold')}>
@@ -176,20 +241,14 @@ export function NoteView({ noteId }: { noteId: string }) {
             ✏️
           </button>
         </div>
-        <div className="tool-group edit-preview-toggle">
-          <button className={`tool-btn ${tab === 'edit' ? 'active' : ''}`} onClick={() => setTab('edit')}>
-            Edit
-          </button>
-          <button
-            className={`tool-btn ${tab === 'preview' ? 'active' : ''}`}
-            onClick={() => setTab('preview')}
-          >
-            Preview
+        <div className="tool-group edit-done">
+          <button className="tool-btn" title="Done — back to reading" onClick={() => setMode('read')}>
+            Done
           </button>
         </div>
       </div>
 
-      <div className={`editor-split show-${tab}`}>
+      <div className="editor-split">
         <textarea
           ref={textRef}
           className="editor-text"
@@ -200,12 +259,14 @@ export function NoteView({ noteId }: { noteId: string }) {
         />
         <div className="editor-preview">
           {effContent.trim() ? (
-            <Markdown source={effContent} />
+            <Markdown source={effContent} editableImages onResize={resizeImage} />
           ) : (
             <p className="hint">Nothing to preview yet.</p>
           )}
         </div>
       </div>
+        </>
+      )}
 
       <div className="ai-bar">
         <span className="ai-bar-label">Claude</span>
