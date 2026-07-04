@@ -9,10 +9,16 @@
     <meta name="apple-mobile-web-app-title" content="Study" />
     <script>
       // Apply the saved color theme before first paint to avoid a flash.
-      // "auto" (or unset) leaves prefers-color-scheme in charge.
+      // "auto" (or unset) leaves prefers-color-scheme in charge. For "custom"
+      // we replay the palette JSON cached by setThemeColor() so the derived
+      // colours are painted immediately (theme.ts is the source of truth).
       try {
         var t = localStorage.getItem('sh.theme')
         if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t)
+        if (t === 'custom') {
+          var p = JSON.parse(localStorage.getItem('sh.customPalette') || '{}')
+          for (var k in p) document.documentElement.style.setProperty(k, p[k])
+        }
       } catch (e) {}
     </script>
     <link rel="icon" href="./icons/icon-192.png" type="image/png" />

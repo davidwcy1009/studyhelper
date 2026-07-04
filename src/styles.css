@@ -252,6 +252,131 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+/* ===== Pastel themes (soft light palettes; ink kept dark for readability) ===== */
+:root[data-theme='blossom'] {
+  --page: #fdf1f6;
+  --surface: #fffafc;
+  --ink: #3a1f2b;
+  --ink-2: #7a5464;
+  --muted: #ac879a;
+  --hairline: #f4dde6;
+  --border: rgba(58, 31, 43, 0.1);
+  --accent: #d1568c;
+  --accent-ink: #ffffff;
+  --good: #1a9d5c;
+  --good-text: #0f7a44;
+  --danger: #d0342f;
+  --warn-bg: #fdf1d9;
+  --ok-bg: #e7f6ea;
+  --no-bg: #fce2e8;
+  --mark-bg: #ffd1e0;
+  --mark-text: #3a1f2b;
+
+  --cat-0: #2f7fd6;
+  --cat-1: #1aa877;
+  --cat-2: #d9971e;
+  --cat-3: #2e8b3d;
+  --cat-4: #7b5bd6;
+  --cat-5: #d0453b;
+  --cat-6: #d3568f;
+  --cat-7: #e0682f;
+
+  --shadow: 0 1px 2px rgba(58, 31, 43, 0.06), 0 4px 16px rgba(58, 31, 43, 0.08);
+}
+
+:root[data-theme='mint'] {
+  --page: #edf9f1;
+  --surface: #f8fefb;
+  --ink: #14261c;
+  --ink-2: #46614f;
+  --muted: #82a38d;
+  --hairline: #d6ecdd;
+  --border: rgba(20, 38, 28, 0.1);
+  --accent: #1a9e73;
+  --accent-ink: #ffffff;
+  --good: #1a8f4c;
+  --good-text: #0f7a44;
+  --danger: #c53b32;
+  --warn-bg: #f7f0d8;
+  --ok-bg: #e0f4e6;
+  --no-bg: #fbe5e2;
+  --mark-bg: #c4efd5;
+  --mark-text: #14261c;
+
+  --cat-0: #2f7fd6;
+  --cat-1: #1aa877;
+  --cat-2: #cf8c1e;
+  --cat-3: #2e8b3d;
+  --cat-4: #7b5bd6;
+  --cat-5: #d0453b;
+  --cat-6: #d76aa0;
+  --cat-7: #e0682f;
+
+  --shadow: 0 1px 2px rgba(20, 38, 28, 0.06), 0 4px 16px rgba(20, 38, 28, 0.08);
+}
+
+:root[data-theme='lavender'] {
+  --page: #f3f0fb;
+  --surface: #fbfaff;
+  --ink: #241f3a;
+  --ink-2: #574f70;
+  --muted: #968cae;
+  --hairline: #e4def2;
+  --border: rgba(36, 31, 58, 0.1);
+  --accent: #7c6bd6;
+  --accent-ink: #ffffff;
+  --good: #1a9d5c;
+  --good-text: #0f7a44;
+  --danger: #d0342f;
+  --warn-bg: #f6efd8;
+  --ok-bg: #e6f4ea;
+  --no-bg: #fbe4e6;
+  --mark-bg: #e0d6f5;
+  --mark-text: #241f3a;
+
+  --cat-0: #2f7fd6;
+  --cat-1: #1aa877;
+  --cat-2: #d9971e;
+  --cat-3: #2e8b3d;
+  --cat-4: #7b5bd6;
+  --cat-5: #d0453b;
+  --cat-6: #d76aa0;
+  --cat-7: #e0682f;
+
+  --shadow: 0 1px 2px rgba(36, 31, 58, 0.06), 0 4px 16px rgba(36, 31, 58, 0.08);
+}
+
+:root[data-theme='sky'] {
+  --page: #edf4fc;
+  --surface: #f8fcff;
+  --ink: #17293a;
+  --ink-2: #47606f;
+  --muted: #829aac;
+  --hairline: #d6e6f2;
+  --border: rgba(23, 41, 58, 0.1);
+  --accent: #2f83d6;
+  --accent-ink: #ffffff;
+  --good: #1a9d5c;
+  --good-text: #0f7a44;
+  --danger: #d0342f;
+  --warn-bg: #f7f0d8;
+  --ok-bg: #e5f5ea;
+  --no-bg: #fbe4e4;
+  --mark-bg: #c9e4f7;
+  --mark-text: #17293a;
+
+  --cat-0: #2f7fd6;
+  --cat-1: #1aa877;
+  --cat-2: #d9971e;
+  --cat-3: #2e8b3d;
+  --cat-4: #7b5bd6;
+  --cat-5: #d0453b;
+  --cat-6: #d76aa0;
+  --cat-7: #e0682f;
+
+  --shadow: 0 1px 2px rgba(23, 41, 58, 0.06), 0 4px 16px rgba(23, 41, 58, 0.08);
+}
+
 /* ===== Base ===== */
 * {
   box-sizing: border-box;
@@ -1442,6 +1567,31 @@ label > textarea {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--ink);
+}
+/* Custom-theme card: the native colour input is the "colour wheel". */
+.theme-card > .theme-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.theme-color-input {
+  width: 30px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  flex: none;
+}
+.theme-color-input::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+.theme-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
 }
 
 /* ===== Small screens ===== */
