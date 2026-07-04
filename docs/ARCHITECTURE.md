@@ -14,7 +14,8 @@ Playwright (icons + e2e smoke test). No backend of any kind.
 Subject 1─* Note        (markdown; images as img:<uuid> links)
 Subject 1─* Deck 1─* Card   (SM-2 scheduling fields on each card)
 Subject 1─* Quiz 1─* QuizAttempt
-Subject 1─* PracticeSet     (items: question/solution/marks; optional noteId provenance)
+Subject 1─* PracticeSet     (items: question/solution/marks; optional noteId provenance;
+                             optional topic + styleNotes when generated from photos of real papers)
 ImageAsset                  (blobs for note photos & sketches, keyed by uuid)
 ReviewLog                   (one row per card grade — feeds streak + future analytics)
 ```
@@ -43,7 +44,9 @@ due review, then ≤20 new; cards due again within 20 min re-enter the session q
 - Functions: `generateFlashcards`, `generateQuiz` (mcq/short via `anyOf`), `keyPoints`,
   `explainMistake`, `transcribePhotos` (vision → `{title, markdown}`), `markAnswer`
   (→ `{verdict: correct|partial|incorrect, feedback}`), `generatePractice`
-  (→ `{title, items:[{question, solution, marks}]}`), `testApiKey`.
+  (→ `{title, items:[{question, solution, marks}]}`; optional `styleNotes` to match real papers),
+  `generatePracticeFromPhotos` (vision → `{title, topic, style, styleNotes, items}` — reads photos
+  of her real homework/past papers and writes new questions in the same style), `testApiKey`.
 - Photos for vision go through `src/images.ts`: re-encode to JPEG if type unsupported (HEIC) or
   >3MB, downscale to ≤2000px — controls token cost and satisfies API media types.
 

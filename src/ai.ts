@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import type { PracticeStyle } from './types'
 
 /**
  * Claude API integration. The API key lives only in this browser's
@@ -370,7 +371,9 @@ export async function generatePractice(opts: {
   topic: string
   context?: string
   count: number
-  style: 'homework' | 'exam' | 'mix'
+  style: PracticeStyle
+  /** Style description captured from photos of real papers, to match on regeneration. */
+  styleNotes?: string
 }): Promise<GeneratedPractice> {
   const styleText = {
     homework: 'homework-style practice questions (build fluency: straightforward to moderately challenging, plenty of applied calculation/short-response work)',
@@ -387,17 +390,101 @@ Rules:
 - Write ${styleText}.
 - Every solution must show the working step by step, not just the final answer.
 - Use realistic numbers and scenarios. Vary the question formats.
-- If topic notes are provided, stay within their scope; otherwise use the standard A-level/IB treatment of the topic.`,
+- If topic notes are provided, stay within their scope; otherwise use the standard A-level/IB treatment of the topic.${
+      opts.styleNotes
+        ? '\n- Closely match the question style described below (format, difficulty, mark weighting, command words).'
+        : ''
+    }`,
     messages: [
       {
         role: 'user',
         content: `Write ${opts.count} practice questions on: ${opts.topic}${
-          opts.context ? `\n\nThe student's notes on this topic:\n${opts.context}` : ''
-        }`,
+          opts.styleNotes ? `\n\nMatch this question style from her real papers:\n${opts.styleNotes}` : ''
+        }${opts.context ? `\n\nThe student's notes on this topic:\n${opts.context}` : ''}`,
       },
     ],
   })
   return JSON.parse(firstText(res)) as GeneratedPractice
+}
+
+// ---------- Practice from photos of real papers (vision) ----------
+
+const photoPracticeSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title', 'topic', 'style', 'styleNotes', 'items'],
+  properties: {
+    title: { type: 'string', description: 'Short title for this practice set' },
+    topic: { type: 'string', description: 'The topic(s) the photographed questions cover' },
+    style: {
+      type: 'string',
+      enum: ['homework', 'exam', 'mix'],
+      description: 'The overall style of the photographed questions',
+    },
+    styleNotes: {
+      type: 'string',
+      description:
+        'A concise description of the question format, difficulty, mark weighting and command words in the photos — detailed enough to regenerate matching questions later',
+    },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['question', 'solution', 'marks'],
+        properties: {
+          question: { type: 'string', description: 'The question, markdown' },
+          solution: {
+            type: 'string',
+            description: 'Full worked solution / model answer, markdown, showing the steps',
+          },
+          marks: { type: 'integer', description: 'Marks the question would carry, 1-10' },
+        },
+      },
+    },
+  },
+} as const
+
+export interface GeneratedPhotoPractice extends GeneratedPractice {
+  topic: string
+  style: PracticeStyle
+  styleNotes: string
+}
+
+export async function generatePracticeFromPhotos(
+  photos: PhotoInput[],
+  opts: { count: number; hint?: string },
+): Promise<GeneratedPhotoPractice> {
+  const res = await client().messages.create({
+    model: getModel(),
+    max_tokens: 16000,
+    thinking: { type: 'adaptive' },
+    output_config: { format: { type: 'json_schema', schema: photoPracticeSchema } },
+    system: `You are a sixth-form tutor. The student photographs her real homework sheets or past-paper questions. Read them, identify the topic(s) and the question STYLE (format, difficulty, mark weightings, exam command words), then write NEW practice questions in that same style, with full worked solutions, so she can practise. ${STYLE_NOTES}
+Rules:
+- Do NOT copy the questions in the photos — write fresh questions on the same topic(s) and in the same style.
+- "styleNotes" must capture the style precisely enough to generate more matching questions later.
+- Every solution shows the working step by step, not just the final answer.
+- Transcribe any equations or chemical formulas into LaTeX.`,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          ...photos.map((p) => ({
+            type: 'image' as const,
+            source: { type: 'base64' as const, media_type: p.mediaType, data: p.base64 },
+          })),
+          {
+            type: 'text' as const,
+            text: `Write ${opts.count} new practice questions matching the topic and style of ${
+              photos.length > 1 ? 'these questions' : 'this question'
+            }.${opts.hint ? ` Context from the student: ${opts.hint}` : ''}`,
+          },
+        ],
+      },
+    ],
+  })
+  return JSON.parse(firstText(res)) as GeneratedPhotoPractice
 }
 
 /** Cheap round-trip to confirm the key works. */

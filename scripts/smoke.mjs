@@ -85,6 +85,24 @@ const mockPractice = {
     },
   ],
 }
+const mockPracticePhotos = {
+  title: 'Projectile motion (from your paper)',
+  topic: 'Projectile motion',
+  style: 'exam',
+  styleNotes: 'Multi-part mechanics questions, 2–3 marks each, command words "calculate" and "show that".',
+  items: [
+    {
+      question: 'A stone is thrown horizontally at $8\\,\\text{m/s}$ from a 45 m cliff. Calculate the time of flight.',
+      solution: '$t = \\sqrt{2s/g} = \\sqrt{90/9.8} \\approx 3.0\\,\\text{s}$.',
+      marks: 3,
+    },
+    {
+      question: 'Show that its horizontal range is about 24 m.',
+      solution: 'Range $= v_x t = 8 \\times 3.0 = 24\\,\\text{m}$.',
+      marks: 2,
+    },
+  ],
+}
 const mockMark = (studentAnswer) => ({
   verdict: /lambda/i.test(studentAnswer) ? 'correct' : 'partial',
   feedback: /lambda/i.test(studentAnswer)
@@ -103,6 +121,7 @@ await page.route('https://api.anthropic.com/**', async (route) => {
     if (props.cards) text = JSON.stringify(mockCards)
     else if (props.questions) text = JSON.stringify(mockQuiz)
     else if (props.markdown) text = JSON.stringify(mockTranscription)
+    else if (props.styleNotes) text = JSON.stringify(mockPracticePhotos)
     else if (props.items) text = JSON.stringify(mockPractice)
     else if (props.verdict) {
       const userText = JSON.stringify(body?.messages ?? '')
@@ -265,8 +284,31 @@ await page.getByText('🟡 Partly there').waitFor()
 check('practice answer AI-marked', true)
 await shot('14-practice-marked')
 
+// ---- 7c2. Practice from photos of a real paper (mocked vision) ----
+await page.goto(BASE + '/#/')
+await page.getByRole('link', { name: /Physics/ }).click()
+await page.getByRole('button', { name: /Example questions/ }).click()
+await page.locator('.modal input[type=file]').setInputFiles('public/icons/icon-192.png')
+await page.locator('.photo-thumb').waitFor()
+await page.getByRole('button', { name: /Generate from photos/ }).click()
+await page.getByRole('heading', { name: 'Question 1' }).waitFor()
+check('practice set generated from photos', (await page.locator('.practice-q').count()) === 2)
+check(
+  'photo practice set flagged as matched to her papers',
+  await page.getByText(/matched to your papers/).isVisible(),
+)
+await shot('16-practice-from-photos')
+
+// "More questions like these" regenerates a fresh set in the captured style
+await page.getByRole('button', { name: /More questions like these/ }).click()
+await page.getByRole('heading', { name: 'Question 1' }).waitFor()
+check('regenerated a fresh matching set', (await page.locator('.practice-q').count()) === 2)
+
 // ---- 7d. Global search ----
-await page.goto(BASE + '/#/search')
+// Navigate via the topbar link (a real hashchange) rather than a same-document
+// goto, which can race with the hash change from the previous page.
+await page.getByRole('link', { name: 'Search', exact: true }).click()
+await page.locator('.search-input').waitFor()
 await page.locator('.search-input').fill('wave')
 await page.getByRole('heading', { name: 'Notes', exact: true }).waitFor()
 const noteHits = await page.locator('.search-hit').count()

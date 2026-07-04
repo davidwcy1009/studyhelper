@@ -107,7 +107,15 @@ export interface PracticeSet {
   /** Set when generated from a note. */
   noteId?: string
   title: string
+  /** Topic the set covers — kept so "more questions like these" can regenerate. */
+  topic?: string
   style: PracticeStyle
+  /**
+   * When generated from photos of real homework/exam papers: a description of the
+   * question format, difficulty, mark weighting and command words, so matching
+   * questions can be regenerated without re-uploading the photos.
+   */
+  styleNotes?: string
   items: PracticeItem[]
   createdAt: number
 }
