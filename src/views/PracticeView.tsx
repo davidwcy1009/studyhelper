@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import type { PracticeItem } from '../types'
+import { newId, type PracticeItem } from '../types'
 import { Markdown } from '../markdown'
-import { aiErrorMessage, hasApiKey, markAnswer, type MarkResult } from '../ai'
+import { aiErrorMessage, generatePractice, hasApiKey, markAnswer, type MarkResult } from '../ai'
 import { go, SubjectChip } from '../App'
 
 const STYLE_LABEL = { homework: 'Homework practice', exam: 'Exam-style', mix: 'Mixed' }
@@ -14,6 +14,8 @@ export function PracticeView({ practiceId }: { practiceId: string }) {
     () => (set ? db.subjects.get(set.subjectId) : undefined),
     [set?.subjectId],
   )
+  const [regenerating, setRegenerating] = useState(false)
+  const [regenError, setRegenError] = useState('')
 
   if (set === undefined) return <div className="page">Loading…</div>
   if (!set) return <div className="page">Practice set not found.</div>
@@ -22,6 +24,42 @@ export function PracticeView({ practiceId }: { practiceId: string }) {
     if (!confirm('Delete this practice set?')) return
     await db.practices.delete(practiceId)
     go(`/subject/${set.subjectId}`)
+  }
+
+  // Generate a fresh set on the same topic and style (using the captured
+  // styleNotes when this set came from photos of her real papers).
+  const regenerate = async () => {
+    setRegenerating(true)
+    setRegenError('')
+    try {
+      const result = await generatePractice({
+        topic: set.topic || set.title,
+        count: set.items.length || 5,
+        style: set.style,
+        styleNotes: set.styleNotes,
+      })
+      const id = newId()
+      await db.practices.add({
+        id,
+        subjectId: set.subjectId,
+        noteId: set.noteId,
+        title: result.title || set.title,
+        topic: set.topic,
+        style: set.style,
+        styleNotes: set.styleNotes,
+        createdAt: Date.now(),
+        items: result.items.map((it) => ({
+          id: newId(),
+          question: it.question,
+          solution: it.solution,
+          marks: it.marks,
+        })),
+      })
+      go(`/practice/${id}`)
+    } catch (e) {
+      setRegenError(aiErrorMessage(e))
+      setRegenerating(false)
+    }
   }
 
   return (
@@ -38,12 +76,23 @@ export function PracticeView({ practiceId }: { practiceId: string }) {
       </div>
       <div className="page-head">
         <h1>{set.title}</h1>
-        <span className="count-chip">{STYLE_LABEL[set.style]}</span>
+        <span className="row-chips">
+          <span className="count-chip">{STYLE_LABEL[set.style]}</span>
+          {set.styleNotes && <span className="count-chip">📷 matched to your papers</span>}
+        </span>
       </div>
       <p className="hint">
         Work each question on paper (or type an answer to have Claude mark it), then reveal the
         solution.
       </p>
+      {hasApiKey() && set.topic && (
+        <div className="head-actions">
+          <button className="btn btn-sm" disabled={regenerating} onClick={regenerate}>
+            {regenerating ? 'Writing more…' : '⚡ More questions like these'}
+          </button>
+        </div>
+      )}
+      {regenError && <p className="error">{regenError}</p>}
       {set.items.map((item, i) => (
         <PracticeQuestion key={item.id} item={item} index={i} />
       ))}

@@ -9,15 +9,15 @@
 - v1.1 (2026-07-03): photo → notes (Claude vision), AI marking of written answers
   (quiz + practice), practice question sets with worked solutions (from topic or note),
   global search (⌘K).
+- v1.2 (2026-07-03): practice from photos of real homework/exam papers — `PracticeGenModal`
+  takes photos (shared `PhotoPicker`, extracted from `PhotoNoteModal`); `generatePracticeFromPhotos`
+  returns `{topic, style, styleNotes, items}`; `styleNotes` + `topic` stored on the `PracticeSet`
+  so "⚡ More questions like these" regenerates in the same style (`generatePractice` gained an
+  optional `styleNotes` param). Sets from photos show a "📷 matched to your papers" chip.
 
 ## Next up — owner-prioritized
 
-1. **Practice/quizzes from photos of real homework & exam papers** (owner request, high value).
-   She snaps her actual homework sheets or past-paper questions; Claude extracts the topics AND
-   the question style, then generates matching practice sets / quizzes. Implementation sketch:
-   add a photo picker to `PracticeGenModal` (reuse `PhotoNoteModal`'s picker + `images.ts`),
-   pass images to a new `ai.ts` function that returns `{topic, styleNotes, items[]}`; store style
-   notes on the PracticeSet for regeneration. Small effort — vision + practice pipelines exist.
+_(nothing queued — pull the next item from the evaluated candidates below)_
 
 ## Evaluated candidates (from owner discussion, in rough value order)
 
