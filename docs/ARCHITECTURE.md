@@ -69,6 +69,22 @@ Single JSON blob: all tables + images as base64. Import **replaces** everything 
 simple mental model for moving iPad ↔ MacBook via AirDrop). Compatibility rule: new tables/fields
 must be optional on import (`data.practices ?? []`) so old backup files keep working.
 
+## Theming (`src/theme.ts`, `src/customTheme.ts`, `src/styles.css`)
+
+Design tokens are CSS vars at the top of `styles.css`. Each named theme is a `:root[data-theme=…]`
+token block; "auto" clears `data-theme` and lets `prefers-color-scheme` pick light/dark. `theme.ts`
+owns the choice (localStorage `sh.theme`), applies it (`applyTheme`), and syncs the `theme-color`
+meta. Named themes: light/dark + midnight/sunset/forest/grape/ocean + pastels blossom/mint/lavender/sky.
+
+The **custom** theme has no CSS block. `customTheme.ts` (pure maths, no DOM) derives a whole palette
+from one picked background colour: it reads the colour's luminance to pick a light or dark scheme,
+then computes surfaces, ink, borders, accent and the 8 subject colours, nudging lightness until
+each meets a WCAG contrast target so text stays readable on any pick. `theme.ts` writes the result
+as inline CSS vars on `<html>` and clears them (`CUSTOM_VARS`) when switching away. The picked colour
+(`sh.themeColor`) and the derived palette JSON (`sh.customPalette`) are cached so the inline script
+in `index.html` can paint custom colours before first paint. All theme state is device-local — not
+in the backup.
+
 ## PWA
 
 vite-plugin-pwa `generateSW`, `registerType: 'autoUpdate'`, precache ~1.2MB (bundle + KaTeX

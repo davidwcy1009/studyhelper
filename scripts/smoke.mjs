@@ -396,13 +396,49 @@ check('selecting a theme sets data-theme + persists', themed.attr === 'ocean' &&
 check('theme swaps the design tokens', themed.pageColor === '#0b1e2a')
 check('status-bar theme-color follows the theme', themed.meta === '#0b1e2a')
 await shot('17-theme-ocean')
-// Return to Auto so downstream screenshots aren't themed.
+
+// Pastel theme (Blossom) — a light palette added alongside the darker named ones.
+await page.locator('.theme-card', { hasText: 'Blossom' }).click()
+await page.waitForTimeout(120)
+const pastel = await page.evaluate(() => ({
+  attr: document.documentElement.getAttribute('data-theme'),
+  pageColor: getComputedStyle(document.documentElement).getPropertyValue('--page').trim().toLowerCase(),
+}))
+check('pastel theme selectable + swaps tokens', pastel.attr === 'blossom' && pastel.pageColor === '#fdf1f6')
+
+// Custom background colour — pick a colour on the wheel; text/accents derive from it.
+await page.evaluate(() => {
+  const inp = document.querySelector('.theme-color-input')
+  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
+  setter.call(inp, '#8a5cff')
+  inp.dispatchEvent(new Event('input', { bubbles: true }))
+  inp.dispatchEvent(new Event('change', { bubbles: true }))
+})
+await page.waitForTimeout(120)
+const custom = await page.evaluate(() => ({
+  attr: document.documentElement.getAttribute('data-theme'),
+  stored: localStorage.getItem('sh.theme'),
+  color: (localStorage.getItem('sh.themeColor') || '').toLowerCase(),
+  page: getComputedStyle(document.documentElement).getPropertyValue('--page').trim().toLowerCase(),
+  ink: getComputedStyle(document.documentElement).getPropertyValue('--ink').trim().toLowerCase(),
+  hasPalette: !!localStorage.getItem('sh.customPalette'),
+}))
+check('custom colour switches to the custom theme', custom.attr === 'custom' && custom.stored === 'custom')
+check('custom theme paints the picked background', custom.page === '#8a5cff' && custom.color === '#8a5cff')
+check('custom theme derives a distinct, readable ink', !!custom.ink && custom.ink !== custom.page)
+check('custom palette cached for pre-paint', custom.hasPalette)
+await shot('18-theme-custom')
+
+// Return to Auto so downstream screenshots aren't themed, and confirm the
+// inline custom vars are cleared (not leaked onto the next theme).
 await page.locator('.theme-card', { hasText: 'Auto' }).click()
 await page.waitForTimeout(100)
-check(
-  'auto clears the data-theme override',
-  (await page.evaluate(() => document.documentElement.getAttribute('data-theme'))) === null,
-)
+const reset = await page.evaluate(() => ({
+  attr: document.documentElement.getAttribute('data-theme'),
+  inlinePage: document.documentElement.style.getPropertyValue('--page'),
+}))
+check('auto clears the data-theme override', reset.attr === null)
+check('leaving custom clears its inline vars', reset.inlinePage === '')
 
 // ---- 11. iPad-sized layout ----
 await page.setViewportSize({ width: 820, height: 1180 })

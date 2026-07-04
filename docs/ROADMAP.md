@@ -14,6 +14,13 @@
   returns `{topic, style, styleNotes, items}`; `styleNotes` + `topic` stored on the `PracticeSet`
   so "⚡ More questions like these" regenerates in the same style (`generatePractice` gained an
   optional `styleNotes` param). Sets from photos show a "📷 matched to your papers" chip.
+- v1.3 (2026-07-04): more theme choices + resumable-plan process. Four pastel themes (blossom,
+  mint, lavender, sky) added to `styles.css` + `theme.ts`. New **Custom** theme: pick any
+  background on a native colour wheel and `src/customTheme.ts` derives a full, WCAG-contrast-checked
+  palette (surfaces, ink, accent, subject colours) that stays legible light or dark; the picked
+  colour + derived palette persist in localStorage and paint pre-first-paint via `index.html`.
+  Process: `docs/WORKLOG.md` convention for logging plan steps across interruptions, `doc-scout`
+  agent (haiku) for cheap doc lookups, and a "keep the docs current" rule in `CLAUDE.md`.
 
 ## Next up — owner-prioritized
 
@@ -43,6 +50,9 @@ _(nothing queued — pull the next item from the evaluated candidates below)_
 
 ## Process note
 
-When adding a feature: read `CLAUDE.md` conventions → implement → extend `scripts/smoke.mjs`
-(mock any new AI schema) → `smoke-verifier` agent → `ui-reviewer` agent if UI changed → `/ship`.
+When adding a feature: read `CLAUDE.md` conventions (delegate doc lookups to `doc-scout`) → log the
+plan in `docs/WORKLOG.md` → implement, ticking the worklog per step → extend `scripts/smoke.mjs`
+(mock any new AI schema) → `smoke-verifier` agent → `ui-reviewer` agent if UI changed → **update
+this ROADMAP (Shipped) + `ARCHITECTURE.md` if internals changed** → `/ship`. Development is always
+summarized here as it happens — a feature isn't done until the docs reflect it.
 Keep proposing new agents/skills when a workflow repeats (owner standing instruction).

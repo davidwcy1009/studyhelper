@@ -12,12 +12,21 @@ import {
   setModel,
   testApiKey,
 } from '../ai'
-import { applyTheme, getTheme, setTheme, THEMES, type ThemeId } from '../theme'
+import {
+  applyTheme,
+  getTheme,
+  getThemeColor,
+  setTheme,
+  setThemeColor,
+  THEMES,
+  type ThemeId,
+} from '../theme'
 
 export function Settings() {
   const [key, setKey] = useState(getApiKey())
   const [model, setModelState] = useState(getModel())
   const [theme, setThemeState] = useState<ThemeId>(getTheme())
+  const [customColor, setCustomColor] = useState(getThemeColor())
   const [keyStatus, setKeyStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [importMsg, setImportMsg] = useState('')
@@ -66,6 +75,19 @@ export function Settings() {
     } catch (e) {
       setImportMsg(`❌ ${e instanceof Error ? e.message : String(e)}`)
     }
+  }
+
+  const selectTheme = (id: ThemeId) => {
+    setThemeState(id)
+    setTheme(id)
+    applyTheme(id)
+  }
+
+  // Picking a colour both stores it and switches to the "custom" theme live.
+  const pickCustomColor = (hex: string) => {
+    setCustomColor(hex)
+    setThemeColor(hex)
+    selectTheme('custom')
   }
 
   const eraseAll = async () => {
@@ -154,11 +176,7 @@ export function Settings() {
               key={t.id}
               className={`theme-card ${theme === t.id ? 'active' : ''}`}
               aria-pressed={theme === t.id}
-              onClick={() => {
-                setThemeState(t.id)
-                setTheme(t.id)
-                applyTheme(t.id)
-              }}
+              onClick={() => selectTheme(t.id)}
             >
               <span className="theme-swatch" style={{ background: t.bg }}>
                 {t.dots.map((c, i) => (
@@ -168,7 +186,34 @@ export function Settings() {
               <span className="theme-name">{t.label}</span>
             </button>
           ))}
+
+          {/* Custom: pick any background colour on the wheel; text + accents are
+              derived to stay readable (see customTheme.ts). */}
+          <label className={`theme-card ${theme === 'custom' ? 'active' : ''}`}>
+            <span
+              className="theme-swatch"
+              style={{ background: customColor, cursor: 'pointer' }}
+            >
+              <span className="theme-dot" style={{ background: 'var(--accent)' }} />
+              <span className="theme-dot" style={{ background: 'var(--ink)' }} />
+            </span>
+            <span className="theme-name">
+              Custom
+              <input
+                type="color"
+                className="theme-color-input"
+                aria-label="Custom background colour"
+                value={customColor}
+                onChange={(e) => pickCustomColor(e.target.value)}
+              />
+            </span>
+          </label>
         </div>
+        <p className="hint">
+          <strong>Custom</strong> lets you pick any background colour — tap the swatch to open the
+          colour wheel. Text, accents and subject colours are chosen automatically to stay legible
+          on whatever you pick, light or dark.
+        </p>
       </section>
 
       <section className="panel">
