@@ -415,8 +415,12 @@ check('note opens in reading mode on iPad', await page.locator('.note-read').isV
 await page.locator('.read-bar button').click()
 await page.locator('.editor-text').waitFor()
 check('iPad editor shows the textarea', await page.locator('.editor-text').isVisible())
-// On iPad width the live-preview pane is dropped in favour of the reading view.
-check('iPad edit hides the split preview pane', !(await page.locator('.editor-preview').isVisible()))
+// iPad keeps the preview (stacked) so image drag-resize stays reachable there.
+check('iPad edit keeps the preview pane', await page.locator('.editor-preview').isVisible())
+check(
+  'iPad edit exposes the image resize handle',
+  await page.locator('.editor-preview .img-resize-handle').first().isVisible(),
+)
 await shot('12-ipad-note')
 
 await browser.close()

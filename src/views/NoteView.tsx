@@ -194,7 +194,7 @@ export function NoteView({ noteId }: { noteId: string }) {
       {mode === 'read' ? (
         <>
           <div className="read-bar">
-            <button className="btn btn-sm btn-primary" onClick={enterEdit}>
+            <button className="btn btn-primary" onClick={enterEdit}>
               ✏️ Edit
             </button>
           </div>
@@ -241,11 +241,9 @@ export function NoteView({ noteId }: { noteId: string }) {
             ✏️
           </button>
         </div>
-        <div className="tool-group edit-done">
-          <button className="tool-btn" title="Done — back to reading" onClick={() => setMode('read')}>
-            Done
-          </button>
-        </div>
+        <button className="btn" title="Done — back to reading" onClick={() => setMode('read')}>
+          Done
+        </button>
       </div>
 
       <div className="editor-split">

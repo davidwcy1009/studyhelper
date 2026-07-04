@@ -772,10 +772,14 @@ label > textarea {
   overflow-x: auto;
 }
 @media (max-width: 899px) {
+  /* Tablets (incl. iPad portrait) stack the textarea and preview so image
+     drag-resize — which lives in the preview — stays reachable there. */
   .editor-split {
     grid-template-columns: 1fr;
   }
-  /* On phones the live preview pane is dropped to save space — tap Done to
+}
+@media (max-width: 640px) {
+  /* Only on phones is the live preview dropped to save space — tap Done to
      return to the full-width reading view instead. */
   .editor-split .editor-preview {
     display: none;
@@ -794,8 +798,9 @@ label > textarea {
   padding: 6px 0;
 }
 .note-read {
+  /* Left-aligned (not centered) so the reading body lines up with the title
+     and toolbar above — Read↔Edit doesn't shift content sideways. */
   max-width: 46rem;
-  margin: 0 auto;
   padding: 4px 2px 40px;
   min-height: 40vh;
   line-height: 1.7;
